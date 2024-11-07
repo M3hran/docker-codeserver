@@ -17,7 +17,21 @@ clean:
 	docker rm -vf $(CONTAINER_NAME) && docker image rm $(IMG_TITLE):$(IMG_VERSION) 
 	
 install:
-	docker run -d --name $(CONTAINER_NAME) $(IMG_TITLE):$(IMG_VERSION)
+	docker run -d \
+		--name $(CONTAINER_NAME) \
+  		-e PUID=1000 \
+		-e PGID=1000 \
+		-e TZ=America\New_York \
+		-e PASSWORD=password `#optional` \
+		-e HASHED_PASSWORD= `#optional` \
+		-e SUDO_PASSWORD=password `#optional` \
+		-e SUDO_PASSWORD_HASH= `#optional` \
+		-e PROXY_DOMAIN= `#optional` \
+		-e DEFAULT_WORKSPACE=/config/workspace `#optional` \
+		-p 8443:8443 \
+		-v ./code-server/config:/config \
+		--restart unless-stopped \
+		$(IMG_TITLE):$(IMG_VERSION)
 
 tag_latest:
 	docker tag $(IMG_TITLE):$(IMG_VERSION) $(IMG_TITLE):latest
