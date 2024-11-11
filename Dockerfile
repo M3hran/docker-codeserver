@@ -1,12 +1,15 @@
 FROM linuxserver/code-server
 
-
 RUN apt update && \
     apt install -y --no-install-recommends \
 	git \
 	golang \
-	docker.io
+	ca-certificates \ 
+	curl \
+	make \
+        gettext
 
+RUN curl -fsSL https://get.docker.com | sh > /dev/null 2>&1 
 
 ARG BUILD_DATE
 LABEL org.opencontainers.image.created="${${no_value}BUILD_DATE}"

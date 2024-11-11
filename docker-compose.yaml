@@ -1,22 +1,22 @@
 ---
 services:
   code-server:
-    image: m3hran/code-server:0.2.1
-    container_name: code-server
+    image: $IMG_TITLE:$IMG_VERSION
+    container_name: $CONTAINER_NAME
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=America/New_York
-      - PASSWORD=Diablo84! #optional
+      - PASSWORD=password #optional
       - HASHED_PASSWORD= #optional
       - SUDO_PASSWORD=abc #optional
       - SUDO_PASSWORD_HASH= #optional
-      - PROXY_DOMAIN=code.sandboxz.com #optional
+      - PROXY_DOMAIN=$PROXY_DOMAIN #optional
       - DEFAULT_WORKSPACE=/config/workspace #optional
     volumes:
       - ./code-server/config:/config
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
-      - 8444:8443
+      - 8443:8443
     restart: unless-stopped
 
