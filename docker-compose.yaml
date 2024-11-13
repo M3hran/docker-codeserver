@@ -13,8 +13,9 @@ services:
       - SUDO_PASSWORD_HASH= #optional
       - PROXY_DOMAIN=$PROXY_DOMAIN #optional
       - DEFAULT_WORKSPACE=/config/workspace #optional
+      - DOCKER_MODS=linuxserver/mods:universal-docker
     volumes:
-      - ./code-server/config:/config
+      - ./config:/config
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - 8443:8443
