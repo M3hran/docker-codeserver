@@ -1,6 +1,8 @@
 name: Check Docker Hub Source Image
 
 on:
+  workflow_dispatch:
+    
   schedule:
     - cron: '0 * * * *'  # Runs every hour; adjust as needed
 
