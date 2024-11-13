@@ -7,9 +7,7 @@ RUN apt update && \
 	ca-certificates \ 
 	curl \
 	make \
-    gettext \
-	spellcheck
-
+    gettext 
 
 RUN curl -fsSL https://get.docker.com | sh > /dev/null 2>&1 
 
