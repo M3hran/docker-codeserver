@@ -1,0 +1,50 @@
+name: Check Docker Hub Source Image
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Runs every hour; adjust as needed
+
+jobs:
+  check-docker-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Docker Image Digest
+        id: check_digest
+        run: |
+          IMAGE_NAME="linuxserver/code-server"
+          DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+              "https://registry.hub.docker.com/v2/$IMAGE_NAME/manifests/latest" \
+              | jq -r '.config.digest')
+          
+          echo "Latest Digest: $DIGEST"
+          echo "::set-output name=digest::$DIGEST"
+
+      - name: Compare Digest and Trigger Build
+        if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
+        run: echo "New Docker image detected. Triggering build."
+
+      - name: Log in to Docker Hub
+        if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+        run: |
+          echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+
+      - name: Checkout Code
+        if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
+        uses: actions/checkout@v2
+
+      - name: Build and Tag Docker Image
+        if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
+        run: |
+          make build
+
+      - name: Push Docker Image to Docker Hub
+        if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
+        run: |
+          make release
+          
+      - name: Save Digest State
+        run: echo "PREVIOUS_DIGEST=$DIGEST" >> $GITHUB_ENV
