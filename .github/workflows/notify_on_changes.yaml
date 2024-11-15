@@ -17,22 +17,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Detect changes in the entire repository
-      - name: Check for changes
-        id: check_changes
-        run: |
-          # Fetch the latest changes from the remote
-          git fetch --prune --unshallow
-          changes=$(git diff --name-only origin/master)
-          if [ -n "$changes" ]; then
-            echo "changes_detected=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "changes_detected=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      # Step 3: Run the bash script if changes are detected
+      # Step 2: send notification
       - name: Send Notification
-        if: env.changes_detected == 'true'
         run: |
           REPO_NAME=${{ github.repository }}
           COMMIT_MESSAGE=$(git log --format=%B -n 1)
