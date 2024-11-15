@@ -31,6 +31,7 @@ jobs:
           else
             echo "No changes detected in the repository."
             echo "changes_detected=false" >> $GITHUB_ENV
+          fi
 
       # Step 3: Run the bash script if changes are detected
       - name: Execute bash script
