@@ -30,7 +30,7 @@ jobs:
         id: fetch_digest
         run: |
           SOURCE_IMAGE="linuxserver/code-server:latest" 
-          CURRENT_DIGEST=$(docker manifest inspect $SOURCE_IMAGE | jq -r '.[0].Descriptor.digest')
+          CURRENT_DIGEST=$(docker manifest inspect $SOURCE_IMAGE | jq -r '.manifests[0].digest')
           echo "CURRENT_DIGEST=$CURRENT_DIGEST" >> $GITHUB_ENV
           echo "CURRENT DIGEST=$CURRENT_DIGEST"
 
