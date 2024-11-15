@@ -46,7 +46,7 @@ jobs:
           fi
           echo "STORED_DIGEST=$STORED_DIGEST"
 
-          if [ "$STORED_DIGEST" == ${{ env.CURRENT_DIGEST }}; then
+          if [ "$STORED_DIGEST" == $CURRENT_DIGEST ]; then
             echo "No update needed."
             echo "update_needed=false" >> $GITHUB_ENV
           else
