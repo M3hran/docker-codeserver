@@ -53,5 +53,7 @@ jobs:
           
       - name: Save Digest State
         id: state
-        run: echo "PREVIOUS_DIGEST=$DIGEST" >> $GITHUB_OUTPUT
+        run: |
+          echo "PREVIOUS_DIGEST=$DIGEST" >> $GITHUB_OUTPUT
+          echo "${{ env.PREVIOUS_VALUE }} env.PREVIOUS_DIGEST $env.PREVIOUS_DIGEST $PREVIOUS_DIGEST"
       
