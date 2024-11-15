@@ -52,8 +52,8 @@ jobs:
       - name: Save Digest State
         id: state
         run: |
-          echo "::set-output name=PREVIOUS_DIGEST::${{ steps.check_digest.outputs.digest }}"
+          echo "PREVIOUS_DIGEST=${{ steps.check_digest.outputs.digest }}" >> "$GITHUB_OUTPUT"
           echo "${{ env.PREVIOUS_DIGEST }} env.PREVIOUS_DIGEST $(env.PREVIOUS_DIGEST)  digest=${{ steps.check_digest.outputs.digest }}"
- #         echo "PREVIOUS_DIGEST=$DIGEST" >> $GITHUB_OUTPUT
+ #         
 
       
