@@ -9,8 +9,6 @@ on:
 jobs:
   check-docker-image:
     runs-on: ubuntu-latest
-    env:
-      PREVIOUS_VALUE: ${{ github.workflows['Check Docker Hub Source Image'].jobs.check-docker-image.steps.state.outputs.PREVIOUS_DIGEST }}
 
     steps:
       - name: Get Docker Hub Token
@@ -21,7 +19,7 @@ jobs:
         run: |
           IMAGE_NAME="linuxserver/code-server:latest"
           DIGEST=$(docker manifest inspect "$IMAGE_NAME" -v | jq -r '.[0].Descriptor.digest')
-          echo "Previous Digest: ${{ env.PREVIOUS_VALUE }}"
+          echo "Previous Digest: ${{ env.PREVIOUS_DIGEST }}"
           echo "Latest Digest: $DIGEST"
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
 
@@ -54,6 +52,8 @@ jobs:
       - name: Save Digest State
         id: state
         run: |
-          echo "PREVIOUS_DIGEST=$DIGEST" >> $GITHUB_OUTPUT
-          echo "${{ env.PREVIOUS_VALUE }} env.PREVIOUS_DIGEST $env.PREVIOUS_DIGEST $PREVIOUS_DIGEST"
+          echo "::set-output name=PREVIOUS_DIGEST::${DIGEST}"
+          echo "${{ env.PREVIOUS_DIGEST }} env.PREVIOUS_DIGEST $env.PREVIOUS_DIGEST  digest=$DIGEST"
+ #         echo "PREVIOUS_DIGEST=$DIGEST" >> $GITHUB_OUTPUT
+
       
