@@ -2,7 +2,7 @@ name: Check Docker Hub Source Image
 
 on:
   workflow_dispatch:
-    
+  
   schedule:
     - cron: '0 * * * *'  # Runs every hour; adjust as needed
 
@@ -16,12 +16,17 @@ jobs:
           TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "' ${{ secrets.DOCKER_HUB_USERNAME }}'", "password": "'${{ secrets.DOCKER_HUB_PASSWORD }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
       - name: Check Docker Image Digest
         id: check_digest
+        uses: actions/download-artifact@v4
+        with:
+          name: PREVIOUS_DIGEST_FILE
+      - name: Print PREVIOUS_DIGEST 
         run: |
           IMAGE_NAME="linuxserver/code-server:latest"
           DIGEST=$(docker manifest inspect "$IMAGE_NAME" -v | jq -r '.[0].Descriptor.digest')
-          echo "Previous Digest: ${{ env.PREVIOUS_DIGEST }}"
+          echo "Previous Digest: $(cat PREVIOUS_DIGEST.txt)"
           echo "Latest Digest: $DIGEST"
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Previous Digest: $${{ job.check-docker-image.outputs.PREVIOUS_DIGEST }}"
 
       - name: Compare Digest and Trigger Build
         if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
@@ -52,8 +57,16 @@ jobs:
       - name: Save Digest State
         id: state
         run: |
-          echo "PREVIOUS_DIGEST=${{ steps.check_digest.outputs.digest }}" >> "$GITHUB_OUTPUT"
-          echo "${{ env.PREVIOUS_DIGEST }} env.PREVIOUS_DIGEST $(env.PREVIOUS_DIGEST)  digest=${{ steps.check_digest.outputs.digest }}"
- #         
+          echo "${{ steps.check_digest.outputs.digest }}" > "PREVIOUS_DIGEST.txt"
+      
+      - name: Upload Digest File
+        uses: actions/upload-artifact@v4
+        with:  
+          name: PREVIOUS_DIGEST_File
+          path: PREVIOUS_DIGEST.txt
+
+        #          echo "PREVIOUS_DIGEST=${{ steps.check_digest.outputs.digest }}" >> "$GITHUB_OUTPUT"
+#          echo "${{ env.PREVIOUS_DIGEST }} env.PREVIOUS_DIGEST $(env.PREVIOUS_DIGEST)  digest=${{ steps.state.outputs.PREVIOUS_DIGEST }}"
+#         
 
       
