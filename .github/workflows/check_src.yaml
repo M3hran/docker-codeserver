@@ -10,7 +10,7 @@ jobs:
   check-docker-image:
     runs-on: ubuntu-latest
     env:
-      PREVIOUS_VALUE: ${{ github.workflows['check_src'].jobs.check-docker-image.steps.state.outputs.PREVIOUS_DIGEST }}
+      PREVIOUS_VALUE: ${{ github.workflows['Check Docker Hub Source Image'].jobs.check-docker-image.steps.state.outputs.PREVIOUS_DIGEST }}
 
     steps:
       - name: Get Docker Hub Token
