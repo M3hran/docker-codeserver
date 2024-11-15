@@ -53,6 +53,7 @@ jobs:
             echo "Source image updated. Update needed."
             echo "${{ env.CURRENT_DIGEST }}" > $DIGEST_FILE
             echo "update_needed=true" >> $GITHUB_ENV
+          fi
 
       # Step 5: Rebuild and push the Docker image if the source image was updated
       - name: Rebuild and push Docker image
