@@ -46,12 +46,12 @@ jobs:
           fi
           echo "STORED_DIGEST=$STORED_DIGEST"
 
-          if [ "$STORED_DIGEST" == $CURRENT_DIGEST ]; then
+          if [ "$STORED_DIGEST" == "${{ env.CURRENT_DIGEST }}" ]; then
             echo "No update needed."
             echo "update_needed=false" >> $GITHUB_ENV
           else
             echo "Source image updated. Update needed."
-            echo "$CURRENT_DIGEST" > $DIGEST_FILE
+            echo "${{ env.CURRENT_DIGEST }}" > $DIGEST_FILE
             echo "update_needed=true" >> $GITHUB_ENV
 
       # Step 5: Rebuild and push the Docker image if the source image was updated
