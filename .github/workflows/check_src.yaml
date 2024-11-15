@@ -64,6 +64,4 @@ jobs:
       # Step 6: Commit changes
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Update source image digest to ${{ env.CURRENT_DIGEST }}"       
-      
-      
+          commit_message: "Update source image digest to ${{ env.CURRENT_DIGEST }}"
