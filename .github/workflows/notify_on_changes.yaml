@@ -1,4 +1,4 @@
-name: notfiy Repo Changes
+name: Notfiy Repo Changes
 
 on:
   push:
