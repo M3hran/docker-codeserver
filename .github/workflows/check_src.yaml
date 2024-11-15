@@ -35,25 +35,25 @@ jobs:
         run: |
           echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
 
-      - name: Checkout Code
-        if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
-        uses: actions/checkout@v2
+#      - name: Checkout Code
+#        if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
+#        uses: actions/checkout@v2
 
-      - name: Build and Tag Docker Image
-        if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
-        run: |
-          make build
+#      - name: Build and Tag Docker Image
+#        if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
+#        run: |
+#          make build
 
-      - name: Push Docker Image to Docker Hub
-        if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
-        run: |
-          make release
+#      - name: Push Docker Image to Docker Hub
+#        if: steps.check_digest.outputs.digest != env.PREVIOUS_DIGEST
+#        run: |
+#          make release
           
       - name: Save Digest State
         id: state
         run: |
-          echo "::set-output name=PREVIOUS_DIGEST::${DIGEST}"
-          echo "${{ env.PREVIOUS_DIGEST }} env.PREVIOUS_DIGEST $env.PREVIOUS_DIGEST  digest=$DIGEST"
+          echo "::set-output name=PREVIOUS_DIGEST::${{ steps.check_digest.outputs.digest }}"
+          echo "${{ env.PREVIOUS_DIGEST }} env.PREVIOUS_DIGEST $(env.PREVIOUS_DIGEST)  digest=${{ steps.check_digest.outputs.digest }}"
  #         echo "PREVIOUS_DIGEST=$DIGEST" >> $GITHUB_OUTPUT
 
       
