@@ -21,7 +21,7 @@ jobs:
         run: |
           IMAGE_NAME="linuxserver/code-server:latest"
           DIGEST=$(docker manifest inspect "$IMAGE_NAME" -v | jq -r '.[0].Descriptor.digest')
-          echo "Previous Digest: ${{ jobs.check-docker-image.outputs.previous_digest }}"
+          echo "Previous Digest: ${{ needs.check-docker-image.outputs.previous_digest }}"
           echo "Latest Digest: $DIGEST"
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
 
