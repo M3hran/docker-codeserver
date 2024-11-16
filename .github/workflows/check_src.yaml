@@ -2,9 +2,10 @@ name: Check Docker Hub Source Image
 
 on:
   workflow_dispatch:
-  
   schedule:
     - cron: '0 * * * *'  # Runs every hour; adjust as needed
+env:
+  SOURCE_IMAGE="linuxserver/code-server:latest"
 
 jobs:
   check-docker-image:
@@ -28,8 +29,7 @@ jobs:
       # Step 3: Fetch the current digest of the source image
       - name: Fetch source image digest
         id: fetch_digest
-        run: |
-          SOURCE_IMAGE="linuxserver/code-server:latest" 
+        run: |      
           CURRENT_DIGEST=$(docker manifest inspect $SOURCE_IMAGE | jq -r '.manifests[0].digest' ) 
           echo "CURRENT_DIGEST=$CURRENT_DIGEST" >> $GITHUB_ENV
           echo "CURRENT DIGEST=$CURRENT_DIGEST"
