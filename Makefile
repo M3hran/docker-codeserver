@@ -1,12 +1,13 @@
 include build.env
 
-DOCKER_TAG 	   := $(IMG_VERSION)
+DOCKER_TAG     := $(IMG_VERSION)
 VERMAJMIN      := $(subst ., ,$(DOCKER_TAG))
 VERSION        := $(word 1,$(VERMAJMIN))
 MAJOR          := $(word 2,$(VERMAJMIN))
 MINOR          := $(word 3,$(VERMAJMIN))
-NEW_MINOR      := $(shell expr "$(MINOR)" + 1)
-NEW_DOCKER_TAG := $(VERSION).$(MAJOR).$(NEW_MINOR)
+BUILDNUM       := $(word 4,$(VERMAJMIN))
+NEW_BUILD_NUM  := $(shell expr "$(BUILDNUM)" + 1)
+NEW_DOCKER_TAG := $(VERSION).$(MAJOR).$(MINOR).$(NEW_BUILD_NUM)
 
 .PHONY: all build test tag_latest release install clean
 
