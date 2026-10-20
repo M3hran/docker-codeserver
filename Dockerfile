@@ -1,4 +1,5 @@
-FROM linuxserver/code-server
+ARG SOURCE_IMAGE=linuxserver/code-server:latest
+FROM ${SOURCE_IMAGE}
 
 RUN apt update && \
     apt install -y --no-install-recommends \
