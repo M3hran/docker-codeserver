@@ -1,0 +1,163 @@
+
+name: Update Code Server Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: "Rebuild even if the digest is unchanged"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: code-server-image-update
+  cancel-in-progress: false
+
+env:
+  SOURCE_IMAGE: linuxserver/code-server:latest
+  DIGEST_FILE: .stored_digest
+
+jobs:
+  check-and-build:
+    name: Check, Build, Publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      - name: Resolve upstream digest
+        id: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DIGEST=$(
+            docker buildx imagetools inspect \
+              "$SOURCE_IMAGE" \
+              --format '{{json .Manifest}}' |
+              jq -er '.digest'
+          )
+
+          if [[ ! "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "::error::Invalid upstream digest"
+            exit 1
+          fi
+
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "SOURCE_DIGEST=$DIGEST" >> "$GITHUB_ENV"
+
+          IMAGE_REPO="${SOURCE_IMAGE%:*}"
+          PINNED_IMAGE="${IMAGE_REPO}@${DIGEST}"
+
+          echo "SOURCE_IMAGE_PINNED=$PINNED_IMAGE" \
+            >> "$GITHUB_ENV"
+
+          echo "Upstream digest: $DIGEST"
+          echo "Pinned image: $PINNED_IMAGE"
+
+      - name: Check whether update is required
+        id: check
+        shell: bash
+        env:
+          FORCE_REBUILD: ${{ inputs.force_rebuild || 'false' }}
+        run: |
+          set -euo pipefail
+
+          STORED_DIGEST=""
+          if [[ -f "$DIGEST_FILE" ]]; then
+            STORED_DIGEST=$(tr -d '\r\n' < "$DIGEST_FILE")
+          fi
+
+          echo "Stored:  $STORED_DIGEST"
+          echo "Current: $SOURCE_DIGEST"
+
+          if [[ "$FORCE_REBUILD" == "true" ]] ||
+             [[ "$STORED_DIGEST" != "$SOURCE_DIGEST" ]]; then
+            echo "update_needed=true" >> "$GITHUB_OUTPUT"
+            echo "Image update required"
+          else
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+            echo "Image already up to date"
+          fi
+
+      - name: Build and publish image
+        if: steps.check.outputs.update_needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Makefile must use SOURCE_IMAGE_PINNED
+          # as the Dockerfile base image.
+          make build
+          make release
+
+      - name: Verify release
+        if: steps.check.outputs.update_needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Replace with registry verification if
+          # your Makefile exposes the published image.
+          echo "Build and release completed successfully"
+
+      - name: Save successful upstream digest
+        if: steps.check.outputs.update_needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          printf '%s\n' "$SOURCE_DIGEST" > "$DIGEST_FILE"
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -- "$DIGEST_FILE"
+
+          if git diff --cached --quiet; then
+            echo "No digest file changes"
+            exit 0
+          fi
+
+          git commit -m \
+            "chore: update code-server base image to ${SOURCE_DIGEST}"
+
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Write job summary
+        if: always()
+        shell: bash
+        env:
+          UPDATE_NEEDED: ${{ steps.check.outputs.update_needed }}
+          DIGEST: ${{ steps.upstream.outputs.digest }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "## Code Server Image Update"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Source | \`$SOURCE_IMAGE\` |"
+            echo "| Digest | \`$DIGEST\` |"
+            echo "| Update needed | $UPDATE_NEEDED |"
+            echo "| Job status | $JOB_STATUS |"
+          } >> "$GITHUB_STEP_SUMMARY"
