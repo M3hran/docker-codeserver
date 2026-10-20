@@ -109,39 +109,86 @@ jobs:
           make build
           make release
 
+
       - name: Verify release
         if: steps.check.outputs.update_needed == 'true'
         shell: bash
         run: |
           set -euo pipefail
 
-          # Replace with registry verification if
-          # your Makefile exposes the published image.
-          echo "Build and release completed successfully"
+          NEW_VERSION=$(
+            sed -n 's/^export IMG_VERSION=//p' build.env
+          )
 
-      - name: Save successful upstream digest
+          IMAGE="m3hran/code-server:${NEW_VERSION}"
+
+          echo "Verifying Docker Hub image: $IMAGE"
+
+          VERSION_DIGEST=$(
+            docker buildx imagetools inspect "$IMAGE" \
+              --format '{{.Manifest.Digest}}'
+          )
+
+          LATEST_DIGEST=$(
+            docker buildx imagetools inspect \
+              "m3hran/code-server:latest" \
+              --format '{{.Manifest.Digest}}'
+          )
+
+          if [[ "$VERSION_DIGEST" != "$LATEST_DIGEST" ]]; then
+            echo "::error::Version and latest tags do not match"
+            exit 1
+          fi
+
+          echo "Verified published version: $NEW_VERSION"
+          echo "Registry digest: $VERSION_DIGEST"
+
+
+
+      - name: Save successful release state
         if: steps.check.outputs.update_needed == 'true'
         shell: bash
         run: |
           set -euo pipefail
 
+          # Read the newly built version from build.env
+          NEW_VERSION=$(
+            sed -n 's/^export IMG_VERSION=//p' build.env
+          )
+
+          if [[ ! "$NEW_VERSION" =~ ^[0-9]{2}\.[0-9]{1,2}\.[0-9]{1,2}\.[0-9]+$ ]]; then
+            echo "::error::Invalid version: $NEW_VERSION"
+            exit 1
+          fi
+
+          echo "Successfully released version: $NEW_VERSION"
+
+          # Record upstream digest after successful build/release
           printf '%s\n' "$SOURCE_DIGEST" > "$DIGEST_FILE"
 
+          # Configure Git identity
           git config user.name "github-actions[bot]"
           git config user.email \
             "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add -- "$DIGEST_FILE"
+          # Stage BOTH files
+          git add -- build.env "$DIGEST_FILE"
+
+          echo "Files being committed:"
+          git diff --cached --stat
 
           if git diff --cached --quiet; then
-            echo "No digest file changes"
+            echo "No changes to commit"
             exit 0
           fi
 
           git commit -m \
-            "chore: update code-server base image to ${SOURCE_DIGEST}"
+            "chore: release code-server ${NEW_VERSION}"
 
           git push origin "HEAD:${GITHUB_REF_NAME}"
+
+          echo "Successfully committed version ${NEW_VERSION}"
+
 
       - name: Write job summary
         if: always()
